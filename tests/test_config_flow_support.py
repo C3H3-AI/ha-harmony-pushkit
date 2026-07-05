@@ -43,3 +43,9 @@ def test_integration_supports_config_entry_unload():
     async_functions = {node.name for node in module.body if isinstance(node, ast.AsyncFunctionDef)}
 
     assert "async_unload_entry" in async_functions
+
+
+def test_manifest_points_to_project_repository():
+    manifest = json.loads((INTEGRATION / "manifest.json").read_text(encoding="utf-8"))
+
+    assert manifest["documentation"] == "https://github.com/xiasi0/ha-harmony-pushkit"

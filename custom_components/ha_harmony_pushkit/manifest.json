@@ -4,7 +4,7 @@
   "codeowners": [],
   "config_flow": true,
   "dependencies": ["mobile_app"],
-  "documentation": "https://github.com/custom-components/ha_harmony_pushkit",
+  "documentation": "https://github.com/xiasi0/ha-harmony-pushkit",
   "iot_class": "cloud_push",
   "requirements": [
     "PyJWT>=2.8.0",
