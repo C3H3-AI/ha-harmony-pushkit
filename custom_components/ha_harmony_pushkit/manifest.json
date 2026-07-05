@@ -1,0 +1,14 @@
+{
+  "domain": "ha_harmony_pushkit",
+  "name": "Harmony PushKit",
+  "codeowners": [],
+  "config_flow": true,
+  "dependencies": ["mobile_app"],
+  "documentation": "https://github.com/custom-components/ha_harmony_pushkit",
+  "iot_class": "cloud_push",
+  "requirements": [
+    "PyJWT>=2.8.0",
+    "cryptography>=42.0.0"
+  ],
+  "version": "0.1.0"
+}

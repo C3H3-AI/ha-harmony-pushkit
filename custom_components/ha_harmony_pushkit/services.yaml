@@ -1,0 +1,22 @@
+send_notification:
+  name: Send notification
+  description: Send a notification through the first registered HarmonyOS PushKit client. Prefer the generated notify entities when more than one device exists.
+  fields:
+    title:
+      name: Title
+      description: Notification title.
+      required: false
+      selector:
+        text: {}
+    message:
+      name: Message
+      description: Notification body.
+      required: true
+      selector:
+        text: {}
+    data:
+      name: Data
+      description: Optional custom data fields sent with the notification.
+      required: false
+      selector:
+        object: {}
