@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import timedelta
-from pathlib import Path
 from typing import Any
 
 from homeassistant.components.notify import NotifyEntity, NotifyEntityFeature
@@ -10,8 +9,8 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.event import async_track_time_interval
 
 from .clients import PushKitClient, iter_pushkit_clients
-from .const import CONF_KEY_FILE, CONF_PUSH_ENDPOINT, DEFAULT_KEY_FILE, DEFAULT_PUSH_ENDPOINT, DOMAIN
-from .pushkit import load_service_account, send_push_message
+from .const import ATTR_PERSISTENT, DEFAULT_KEY_FILE, DEFAULT_PUSH_ENDPOINT, DOMAIN
+from .pushkit import load_agc_client, send_push_message
 
 SCAN_INTERVAL = timedelta(minutes=1)
 
@@ -27,7 +26,7 @@ async def async_setup_entry(hass: Any, entry: Any, async_add_entities: Any) -> N
                 known_client_keys.update(client_keys)
                 continue
             known_client_keys.update(client_keys)
-            entities.append(HarmonyPushKitNotifyEntity(hass, client, entry.data))
+            entities.append(HarmonyPushKitNotifyEntity(hass, client))
         if entities:
             async_add_entities(entities)
 
@@ -38,10 +37,9 @@ async def async_setup_entry(hass: Any, entry: Any, async_add_entities: Any) -> N
 
 
 class HarmonyPushKitNotifyEntity(NotifyEntity):
-    def __init__(self, hass: Any, client: PushKitClient, domain_config: dict[str, Any]) -> None:
+    def __init__(self, hass: Any, client: PushKitClient) -> None:
         self.hass = hass
         self._client = client
-        self._domain_config = domain_config
         self._attr_unique_id = f"{DOMAIN}_{client.unique_key}"
         self._attr_name = client.name
         self._attr_supported_features = NotifyEntityFeature.TITLE
@@ -73,18 +71,20 @@ class HarmonyPushKitNotifyEntity(NotifyEntity):
         target: list[str] | None = None,
         data: dict[str, Any] | None = None,
     ) -> None:
-        key_file = str(self._domain_config.get(CONF_KEY_FILE, DEFAULT_KEY_FILE)).strip() or DEFAULT_KEY_FILE
-        endpoint = str(self._domain_config.get(CONF_PUSH_ENDPOINT, DEFAULT_PUSH_ENDPOINT)).strip() or DEFAULT_PUSH_ENDPOINT
-        auth = load_service_account(_hass_path(self.hass, key_file))
+        credentials = load_agc_client(self.hass.config.path(DEFAULT_KEY_FILE))
         client = self._current_client()
+        payload_data = dict(data or {})
+        persistent = _pop_bool(payload_data, ATTR_PERSISTENT)
         await send_push_message(
             session=async_get_clientsession(self.hass),
-            auth=auth,
+            credentials=credentials,
             pushkit_token=client.pushkit_token,
             title=title or "Home Assistant",
             message=message,
-            data=data or {},
-            endpoint_template=endpoint,
+            data=payload_data,
+            persistent=persistent,
+            endpoint_template=DEFAULT_PUSH_ENDPOINT,
+            server_instance_id=_hass_instance_id(self.hass),
         )
 
     def _current_client(self) -> PushKitClient:
@@ -102,8 +102,15 @@ def _client_keys(client: PushKitClient) -> set[str]:
     return {key for key in (client.unique_key, client.device_id, client.webhook_id) if key}
 
 
-def _hass_path(hass: Any, path: str) -> Path:
-    value = Path(path)
-    if value.is_absolute():
+def _pop_bool(data: dict[str, Any], key: str) -> bool:
+    value = data.pop(key, False)
+    if isinstance(value, bool):
         return value
-    return Path(hass.config.path(path))
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "on"}
+    return bool(value)
+
+
+def _hass_instance_id(hass: Any) -> str:
+    config = getattr(hass, "config", None)
+    return str(getattr(config, "instance_id", "") or "").strip()

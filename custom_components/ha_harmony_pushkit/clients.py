@@ -3,11 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Mapping
 
-from .const import ATTR_PUSHKIT_TOKEN, ATTR_WEBHOOK_ID
-
 MOBILE_APP_DOMAIN = "mobile_app"
 MOBILE_APP_CONFIG_ENTRIES = "config_entries"
-PUSHKIT_PROVIDER = "huawei_push_kit"
 
 
 @dataclass(frozen=True)
@@ -31,14 +28,10 @@ def iter_pushkit_clients(hass: Any) -> list[PushKitClient]:
         app_data = _app_data(entry_data)
         if not app_data:
             continue
-        if app_data.get("pushkit_enabled") is not True:
-            continue
-        if _string(app_data, "pushkit_provider") != PUSHKIT_PROVIDER:
-            continue
-        pushkit_token = _string(app_data, ATTR_PUSHKIT_TOKEN)
+        pushkit_token = _string(app_data, "pushkit_token")
         if not pushkit_token:
             continue
-        webhook_id = _string(entry_data, ATTR_WEBHOOK_ID)
+        webhook_id = _string(entry_data, "webhook_id")
         device_id = _string(entry_data, "device_id")
         unique_key = webhook_id or device_id or str(entry_key).strip()
         if not unique_key:

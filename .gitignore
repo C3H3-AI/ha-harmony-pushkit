@@ -12,3 +12,4 @@ htmlcov/
 agc-service-account.json
 docs/
 .agents/
+tests/

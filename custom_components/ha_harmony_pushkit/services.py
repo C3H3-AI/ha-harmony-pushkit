@@ -3,15 +3,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Mapping
 
-from .clients import iter_pushkit_clients
 from .const import (
     ATTR_DATA,
+    ATTR_ENTITY_ID,
     ATTR_MESSAGE,
-    ATTR_PUSHKIT_TOKEN,
+    ATTR_PERSISTENT,
     ATTR_TITLE,
-    ATTR_WEBHOOK_ID,
-    CONF_KEY_FILE,
-    CONF_PUSH_ENDPOINT,
 )
 
 
@@ -21,17 +18,17 @@ class ServiceValidationError(ValueError):
 
 @dataclass(frozen=True)
 class SendNotificationData:
-    pushkit_token: str
+    entity_ids: list[str]
     title: str
     message: str
     data: dict[str, Any]
-    key_file: str
-    push_endpoint: str
-    webhook_id: str
+    persistent: bool
 
 
 def normalize_send_notification_data(data: Mapping[str, Any]) -> SendNotificationData:
-    pushkit_token = _optional_string(data, ATTR_PUSHKIT_TOKEN)
+    entity_ids = _optional_string_list(data, ATTR_ENTITY_ID)
+    if not entity_ids:
+        raise ServiceValidationError(f"{ATTR_ENTITY_ID} is required")
     message = _required_string(data, ATTR_MESSAGE)
     title = _optional_string(data, ATTR_TITLE) or "Home Assistant"
     payload_data = data.get(ATTR_DATA)
@@ -41,39 +38,12 @@ def normalize_send_notification_data(data: Mapping[str, Any]) -> SendNotificatio
         raise ServiceValidationError(f"{ATTR_DATA} must be a mapping")
 
     return SendNotificationData(
-        pushkit_token=pushkit_token,
+        entity_ids=entity_ids,
         title=title,
         message=message,
         data=dict(payload_data),
-        key_file=_optional_string(data, CONF_KEY_FILE),
-        push_endpoint=_optional_string(data, CONF_PUSH_ENDPOINT),
-        webhook_id=_optional_string(data, ATTR_WEBHOOK_ID),
+        persistent=_optional_bool(data, ATTR_PERSISTENT),
     )
-
-
-def resolve_pushkit_token(hass: Any, explicit_token: str, webhook_id: str) -> str:
-    token = explicit_token.strip()
-    if token:
-        return token
-
-    target_webhook_id = webhook_id.strip()
-    matches = [
-        client.pushkit_token
-        for client in iter_pushkit_clients(hass)
-        if not target_webhook_id or client.webhook_id == target_webhook_id
-    ]
-
-    if len(matches) == 1:
-        return matches[0]
-    if len(matches) > 1:
-        raise ServiceValidationError(
-            f"{ATTR_WEBHOOK_ID} is required when multiple HarmonyOS mobile_app registrations have Push Kit tokens"
-        )
-
-    raise ServiceValidationError(
-        f"{ATTR_PUSHKIT_TOKEN} is required when no HarmonyOS mobile_app registration has Push Kit token"
-    )
-
 
 
 def _required_string(data: Mapping[str, Any], field: str) -> str:
@@ -88,3 +58,25 @@ def _optional_string(data: Mapping[str, Any], field: str) -> str:
     if value is None:
         return ""
     return str(value).strip()
+
+
+def _optional_string_list(data: Mapping[str, Any], field: str) -> list[str]:
+    value = data.get(field)
+    if value is None:
+        return []
+    if isinstance(value, str):
+        stripped = value.strip()
+        return [stripped] if stripped else []
+    if isinstance(value, (list, tuple, set)):
+        return [str(item).strip() for item in value if str(item).strip()]
+    stripped = str(value).strip()
+    return [stripped] if stripped else []
+
+
+def _optional_bool(data: Mapping[str, Any], field: str) -> bool:
+    value = data.get(field, False)
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "on"}
+    return bool(value)

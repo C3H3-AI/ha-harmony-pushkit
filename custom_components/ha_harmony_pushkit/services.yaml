@@ -1,22 +1,33 @@
 send_notification:
-  name: Send notification
-  description: Send a notification through the first registered HarmonyOS PushKit client. Prefer the generated notify entities when more than one device exists.
+  name: 发送通知
+  description: 通过选定的 Harmony PushKit 通知实体发送通知。
+  target:
+    entity:
+      integration: ha_harmony_pushkit
+      domain: notify
   fields:
     title:
-      name: Title
-      description: Notification title.
+      name: 标题
+      description: 通知标题。
       required: false
       selector:
         text: {}
     message:
-      name: Message
-      description: Notification body.
+      name: 正文
+      description: 通知正文。
       required: true
       selector:
         text: {}
     data:
-      name: Data
-      description: Optional custom data fields sent with the notification.
+      name: 自定义数据
+      description: 随通知发送的可选自定义数据。
       required: false
       selector:
         object: {}
+    persistent:
+      name: App 落库
+      description: 将通知写入 App 通知历史。
+      required: false
+      default: false
+      selector:
+        boolean: {}

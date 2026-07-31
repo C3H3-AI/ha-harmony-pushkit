@@ -6,9 +6,6 @@
   "dependencies": ["mobile_app"],
   "documentation": "https://github.com/xiasi0/ha-harmony-pushkit",
   "iot_class": "cloud_push",
-  "requirements": [
-    "PyJWT>=2.8.0",
-    "cryptography>=42.0.0"
-  ],
+  "requirements": [],
   "version": "0.1.0"
 }
