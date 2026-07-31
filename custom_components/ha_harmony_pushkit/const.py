@@ -1,6 +1,6 @@
 DOMAIN = "ha_harmony_pushkit"
 
-SERVICE_SEND_NOTIFICATION = "send_notification"
+SERVICE_SEND_MESSAGE = "send_message"
 
 DEFAULT_KEY_FILE = ".storage/ha_harmony_pushkit/agc-client.json"
 DEFAULT_PUSH_ENDPOINT = "https://push-api.cloud.huawei.com/v3/{project_id}/messages:send"

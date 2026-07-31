@@ -7,6 +7,7 @@ from homeassistant.components.notify import NotifyEntity, NotifyEntityFeature
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.util import slugify
 
 from .clients import PushKitClient, iter_pushkit_clients
 from .const import ATTR_PERSISTENT, DEFAULT_KEY_FILE, DEFAULT_PUSH_ENDPOINT, DOMAIN
@@ -17,6 +18,7 @@ SCAN_INTERVAL = timedelta(minutes=1)
 
 async def async_setup_entry(hass: Any, entry: Any, async_add_entities: Any) -> None:
     known_client_keys: set[str] = set()
+    notify_entities = hass.data.setdefault(DOMAIN, {}).setdefault("notify_entities", {})
 
     async def async_add_new_entities(now: Any = None) -> None:
         entities: list[HarmonyPushKitNotifyEntity] = []
@@ -26,7 +28,9 @@ async def async_setup_entry(hass: Any, entry: Any, async_add_entities: Any) -> N
                 known_client_keys.update(client_keys)
                 continue
             known_client_keys.update(client_keys)
-            entities.append(HarmonyPushKitNotifyEntity(hass, client))
+            entity = HarmonyPushKitNotifyEntity(hass, client)
+            notify_entities[client.unique_key] = entity
+            entities.append(entity)
         if entities:
             async_add_entities(entities)
 
@@ -41,7 +45,8 @@ class HarmonyPushKitNotifyEntity(NotifyEntity):
         self.hass = hass
         self._client = client
         self._attr_unique_id = f"{DOMAIN}_{client.unique_key}"
-        self._attr_name = client.name
+        self._attr_name = "HarmonyOS PushKit"
+        self._attr_suggested_object_id = f"harmonyos_pushkit_{slugify(client.name)}"
         self._attr_supported_features = NotifyEntityFeature.TITLE
 
     @property
@@ -51,6 +56,9 @@ class HarmonyPushKitNotifyEntity(NotifyEntity):
     @property
     def name(self) -> str:
         return self._attr_name
+
+    def async_record_success(self) -> None:
+        self._async_record_notification()
 
     @property
     def device_info(self) -> dict[str, Any]:

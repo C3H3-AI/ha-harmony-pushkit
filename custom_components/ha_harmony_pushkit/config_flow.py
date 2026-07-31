@@ -7,7 +7,7 @@ from homeassistant import config_entries
 from .const import DOMAIN
 
 
-class HaHarmonyPushKitConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class HarmonyPushKitConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Harmony PushKit."""
 
     VERSION = 1

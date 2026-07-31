@@ -1,11 +1,16 @@
-send_notification:
-  name: 发送通知
-  description: 通过选定的 Harmony PushKit 通知实体发送通知。
-  target:
-    entity:
-      integration: ha_harmony_pushkit
-      domain: notify
+send_message:
+  name: 发送 HarmonyOS 通知
+  description: 向选定的 HarmonyOS 设备发送通知。
   fields:
+    entity_id:
+      name: 通知实体
+      description: 选择要接收通知的 HarmonyOS 设备。
+      required: true
+      selector:
+        entity:
+          multiple: true
+          filter:
+            domain: notify
     title:
       name: 标题
       description: 通知标题。

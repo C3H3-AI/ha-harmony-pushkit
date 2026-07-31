@@ -17,7 +17,7 @@ class ServiceValidationError(ValueError):
 
 
 @dataclass(frozen=True)
-class SendNotificationData:
+class SendMessageData:
     entity_ids: list[str]
     title: str
     message: str
@@ -25,7 +25,7 @@ class SendNotificationData:
     persistent: bool
 
 
-def normalize_send_notification_data(data: Mapping[str, Any]) -> SendNotificationData:
+def normalize_send_message_data(data: Mapping[str, Any]) -> SendMessageData:
     entity_ids = _optional_string_list(data, ATTR_ENTITY_ID)
     if not entity_ids:
         raise ServiceValidationError(f"{ATTR_ENTITY_ID} is required")
@@ -37,7 +37,7 @@ def normalize_send_notification_data(data: Mapping[str, Any]) -> SendNotificatio
     if not isinstance(payload_data, dict):
         raise ServiceValidationError(f"{ATTR_DATA} must be a mapping")
 
-    return SendNotificationData(
+    return SendMessageData(
         entity_ids=entity_ids,
         title=title,
         message=message,
